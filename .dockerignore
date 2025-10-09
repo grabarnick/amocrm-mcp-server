@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.env.*
+.amo-tokens.json
+test-*.ts
+test-*.sh
+examples/
+*.md
+.DS_Store
+dist

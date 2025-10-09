@@ -1,0 +1,30 @@
+name: amocrm-mcp-server
+services:
+- name: api
+  source_dir: /
+  github:
+    repo: YOUR_GITHUB_USERNAME/amocrm-mcp-server  # ЗАМЕНИТЕ НА ВАШ РЕПОЗИТОРИЙ
+    branch: main
+  run_command: node dist/index.js
+  environment_slug: node-js
+  instance_count: 1
+  instance_size_slug: basic-xxs  # $5/месяц
+  routes:
+  - path: /
+  envs:
+  - key: NODE_ENV
+    value: production
+  - key: AMO_BASE_URL
+    value: https://yoursubdomain.amocrm.ru  # ЗАМЕНИТЕ НА ВАШ URL
+  - key: AMO_CLIENT_ID
+    value: your_client_id  # ЗАМЕНИТЕ НА ВАШ CLIENT_ID
+  - key: AMO_CLIENT_SECRET
+    value: your_client_secret  # ЗАМЕНИТЕ НА ВАШ CLIENT_SECRET
+  - key: AMO_REDIRECT_URI
+    value: https://your-app-url.com/callback  # ЗАМЕНИТЕ НА ВАШ REDIRECT_URI
+  - key: AMO_ACCESS_TOKEN
+    value: your_access_token  # ЗАМЕНИТЕ НА ВАШ ACCESS_TOKEN
+  - key: AMO_REFRESH_TOKEN
+    value: your_refresh_token  # ЗАМЕНИТЕ НА ВАШ REFRESH_TOKEN
+  build_command: npm run build
+  dockerfile_path: Dockerfile

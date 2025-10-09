@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  amocrm-mcp:
+    build: .
+    container_name: amocrm-mcp-server
+    restart: unless-stopped
+    environment:
+      # Переменные окружения для AmoCRM
+      - AMO_BASE_URL=${AMO_BASE_URL}
+      - AMO_CLIENT_ID=${AMO_CLIENT_ID}
+      - AMO_CLIENT_SECRET=${AMO_CLIENT_SECRET}
+      - AMO_REDIRECT_URI=${AMO_REDIRECT_URI}
+      - AMO_ACCESS_TOKEN=${AMO_ACCESS_TOKEN}
+      - AMO_REFRESH_TOKEN=${AMO_REFRESH_TOKEN}
+    # Если нужен доступ извне (для health checks)
+    ports:
+      - "3000:3000"
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

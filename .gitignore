@@ -7,3 +7,6 @@ dist/
 .DS_Store
 *.tsbuildinfo
 .amo-tokens.json
+
+# Deployment
+.do/app.yaml
