@@ -5,7 +5,7 @@
   "type": "module",
   "description": "MCP сервер для интеграции с amoCRM (CRUD по leads/contacts/notes, OAuth2)",
   "scripts": {
-    "dev": "ts-node --transpile-only --esm src/index.ts",
+    "dev": "node --loader ts-node/esm src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"
