@@ -1,19 +1,18 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
 import type { AmoClient } from '../amocrm/client.js';
 
 export function registerTools(server: McpServer, amo: AmoClient) {
-  server.registerTool(
-    'amocrm.listLeads',
+  server.tool(
+    'amocrm_listLeads',
+    'Получить список сделок amoCRM с пагинацией',
     {
-      title: 'Список сделок',
-      description: 'Получить список сделок amoCRM с пагинацией',
-      inputSchema: {
-        page: z.number().int().min(1).optional(),
-        limit: z.number().int().min(1).max(250).optional(),
+      type: 'object',
+      properties: {
+        page: { type: 'number', description: 'Номер страницы (начиная с 1)' },
+        limit: { type: 'number', description: 'Количество записей на странице (1-250)' },
       },
     },
-    async (args, _extra) => {
+    async (args) => {
       await amo.ensureAuth();
       const { page = 1, limit = 25 } = args ?? {};
       const offset = (page - 1) * limit;
@@ -22,19 +21,20 @@ export function registerTools(server: McpServer, amo: AmoClient) {
     }
   );
 
-  server.registerTool(
-    'amocrm.createLead',
+  server.tool(
+    'amocrm_createLead',
+    'Создать новую сделку в amoCRM',
     {
-      title: 'Создать сделку',
-      description: 'Создать новую сделку в amoCRM',
-      inputSchema: {
-        name: z.string(),
-        price: z.number().optional(),
-        pipeline_id: z.number().optional(),
-        status_id: z.number().optional(),
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Название сделки' },
+        price: { type: 'number', description: 'Бюджет сделки' },
+        pipeline_id: { type: 'number', description: 'ID воронки' },
+        status_id: { type: 'number', description: 'ID статуса' },
       },
+      required: ['name'],
     },
-    async (args, _extra) => {
+    async (args) => {
       await amo.ensureAuth();
       const payload = Array.isArray(args) ? args : [args];
       const data = await amo.post('/api/v4/leads', payload);
@@ -42,14 +42,17 @@ export function registerTools(server: McpServer, amo: AmoClient) {
     }
   );
 
-  server.registerTool(
-    'amocrm.getContact',
+  server.tool(
+    'amocrm_getContact',
+    'Получить контакт по ID',
     {
-      title: 'Контакт по ID',
-      description: 'Получить контакт по ID',
-      inputSchema: { id: z.number().int().positive() },
+      type: 'object',
+      properties: {
+        id: { type: 'number', description: 'ID контакта' },
+      },
+      required: ['id'],
     },
-    async (args, _extra) => {
+    async (args) => {
       await amo.ensureAuth();
       const { id } = args;
       const data = await amo.get(`/api/v4/contacts/${id}`);
@@ -57,17 +60,17 @@ export function registerTools(server: McpServer, amo: AmoClient) {
     }
   );
 
-  server.registerTool(
-    'amocrm.listContacts',
+  server.tool(
+    'amocrm_listContacts',
+    'Получить список контактов amoCRM с пагинацией',
     {
-      title: 'Список контактов',
-      description: 'Получить список контактов amoCRM с пагинацией',
-      inputSchema: {
-        page: z.number().int().min(1).optional(),
-        limit: z.number().int().min(1).max(250).optional(),
+      type: 'object',
+      properties: {
+        page: { type: 'number', description: 'Номер страницы (начиная с 1)' },
+        limit: { type: 'number', description: 'Количество записей на странице (1-250)' },
       },
     },
-    async (args, _extra) => {
+    async (args) => {
       await amo.ensureAuth();
       const { page = 1, limit = 25 } = args ?? {};
       const data = await amo.get(`/api/v4/contacts?limit=${limit}&page=${page}`);
@@ -75,14 +78,17 @@ export function registerTools(server: McpServer, amo: AmoClient) {
     }
   );
 
-  server.registerTool(
-    'amocrm.createContact',
+  server.tool(
+    'amocrm_createContact',
+    'Создать новый контакт в amoCRM',
     {
-      title: 'Создать контакт',
-      description: 'Создать новый контакт в amoCRM',
-      inputSchema: { name: z.string() },
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Имя контакта' },
+      },
+      required: ['name'],
     },
-    async (args, _extra) => {
+    async (args) => {
       await amo.ensureAuth();
       const payload = Array.isArray(args) ? args : [args];
       const data = await amo.post('/api/v4/contacts', payload);
@@ -90,17 +96,25 @@ export function registerTools(server: McpServer, amo: AmoClient) {
     }
   );
 
-  server.registerTool(
-    'amocrm.createNote',
+  server.tool(
+    'amocrm_createNote',
+    'Создать заметку для сущности (leads/contacts/companies)',
     {
-      title: 'Создать заметку',
-      description: 'Создать заметку для сущности (leads/contacts/companies).',
-      inputSchema: {
-        entity: z.enum(['leads', 'contacts', 'companies']),
-        payload: z.array(z.unknown()),
+      type: 'object',
+      properties: {
+        entity: { 
+          type: 'string', 
+          enum: ['leads', 'contacts', 'companies'],
+          description: 'Тип сущности' 
+        },
+        payload: { 
+          type: 'array',
+          description: 'Массив заметок для создания'
+        },
       },
+      required: ['entity', 'payload'],
     },
-    async (args, _extra) => {
+    async (args) => {
       await amo.ensureAuth();
       const { entity, payload } = args;
       const data = await amo.post(`/api/v4/${entity}/notes`, payload);
@@ -108,14 +122,18 @@ export function registerTools(server: McpServer, amo: AmoClient) {
     }
   );
 
-  server.registerTool(
-    'amocrm.exchangeAuthCode',
+  server.tool(
+    'amocrm_exchangeAuthCode',
+    'Обменять authorization code на токены OAuth2',
     {
-      title: 'OAuth2 обмен кода',
-      description: 'Обменять authorization code на токены и сохранить их через колбэк клиента',
-      inputSchema: { code: z.string(), redirect_uri: z.string().url().optional() },
+      type: 'object',
+      properties: {
+        code: { type: 'string', description: 'Код авторизации' },
+        redirect_uri: { type: 'string', description: 'Redirect URI (опционально)' },
+      },
+      required: ['code'],
     },
-    async (args, _extra) => {
+    async (args) => {
       const tokens = await amo.exchangeAuthCode(args.code, args.redirect_uri);
       return { content: [{ type: 'text', text: JSON.stringify(tokens) }] };
     }

@@ -100,5 +100,66 @@ npm run start
 }
 ```
 
+## Тестирование
+
+### Тестирование MCP сервера
+
+После сборки вы можете протестировать MCP сервер несколькими способами:
+
+#### Метод 1: MCP Inspector (рекомендуется)
+
+```bash
+npm run build
+npx @modelcontextprotocol/inspector node dist/index.js
+```
+
+Inspector откроет веб-интерфейс, где вы сможете:
+- Просмотреть все инструменты
+- Тестировать вызовы
+- Отлаживать ошибки
+
+#### Метод 2: Claude Desktop
+
+Подключите сервер к Claude Desktop (см. раздел "Подключение MCP-клиента" выше).
+
+Подробнее: [TEST-MCP.md](./TEST-MCP.md)
+
+### Тестирование API отдельно от MCP
+
+Вы можете тестировать методы работы с AmoCRM API независимо от MCP сервера:
+
+```bash
+# Показать справку
+npm run test-api
+
+# Получить информацию об аккаунте
+npm run test-api account
+
+# Получить список сделок
+npm run test-api leads 10
+
+# Создать сделку
+npm run test-api create-lead "Тестовая сделка"
+```
+
+Или используйте удобный скрипт:
+
+```bash
+./api-test.sh account
+./api-test.sh leads 5
+```
+
+#### Подробная документация по тестированию
+
+- **[TEST-MCP.md](./TEST-MCP.md)** - Тестирование MCP сервера
+- **[TEST-API.md](./TEST-API.md)** - Тестирование AmoCRM API
+- **[OAUTH-GUIDE.md](./OAUTH-GUIDE.md)** - Руководство по OAuth авторизации
+- **[TESTING-GUIDE.md](./TESTING-GUIDE.md)** - Полное руководство по тестированию
+
+#### Продвинутые примеры
+
+В директории `examples/` находятся примеры для специфических сценариев:
+- `advanced-test.ts` - создание сделок с контактами, поиск, обновление, добавление примечаний
+
 ## Ссылки
 - Документация amoCRM (возможности и API): https://www.amocrm.ru/developers/content/crm_platform/platform-abilities

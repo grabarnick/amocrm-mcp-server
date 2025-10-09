@@ -1,7 +1,9 @@
 node_modules/
 dist/
 .env
+.env.backup
 .env.local
 .env.*.local
 .DS_Store
 *.tsbuildinfo
+.amo-tokens.json
