@@ -17,12 +17,12 @@ async function main() {
     refreshToken: cfg.AMO_REFRESH_TOKEN,
   });
 
-  // В production режиме запускаем HTTP MCP сервер
+  // В production режиме запускаем Streamable HTTP MCP сервер
   if (process.env.NODE_ENV === 'production') {
-    console.log('Starting HTTP MCP server in production mode');
-    // Импортируем и запускаем HTTP MCP сервер
-    const { startHttpMcpServer } = await import('./http-mcp-server.js');
-    await startHttpMcpServer();
+    console.log('Starting Streamable HTTP MCP server in production mode');
+    // Импортируем и запускаем Streamable HTTP MCP сервер
+    const { startStreamableHttpMcpServer } = await import('./streamable-http-mcp.js');
+    await startStreamableHttpMcpServer();
   } else {
     // В dev режиме запускаем обычный stdio MCP сервер
     const mcp = new McpServer({ name: 'amocrm-mcp-server', version: '0.1.0' });
