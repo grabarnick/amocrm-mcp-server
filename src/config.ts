@@ -12,6 +12,8 @@ const EnvSchema = z.object({
   // DigitalOcean App Platform API (опционально, для автообновления токенов)
   DO_API_TOKEN: z.string().optional(),
   DO_APP_ID: z.string().optional(),
+  // MCP Authorization Token (опционально, для защиты HTTP эндпоинтов)
+  MCP_AUTH_TOKEN: z.string().optional(),
 });
 
 export type AppConfig = z.infer<typeof EnvSchema>;

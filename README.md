@@ -14,25 +14,84 @@ npm install
 ## Переменные окружения
 Создайте файл `.env` в корне проекта и задайте значения:
 
-- AMO_BASE_URL — базовый URL аккаунта, например `https://example.amocrm.ru`
-- AMO_CLIENT_ID — client_id интеграции
-- AMO_CLIENT_SECRET — client_secret интеграции
-- AMO_REDIRECT_URI — redirect URI, если используете Authorization Code Flow
-- AMO_ACCESS_TOKEN — access token (после первичного обмена)
-- AMO_REFRESH_TOKEN — refresh token (после первичного обмена)
-- AMO_LONG_TERM_TOKEN — долгосрочный токен amoCRM (до 5 лет, **рекомендуется**)
+### AmoCRM настройки
+- `AMO_BASE_URL` — базовый URL аккаунта, например `https://example.amocrm.ru`
+- `AMO_CLIENT_ID` — client_id интеграции
+- `AMO_CLIENT_SECRET` — client_secret интеграции
+- `AMO_REDIRECT_URI` — redirect URI, если используете Authorization Code Flow
+- `AMO_ACCESS_TOKEN` — access token (после первичного обмена)
+- `AMO_REFRESH_TOKEN` — refresh token (после первичного обмена)
+- `AMO_LONG_TERM_TOKEN` — долгосрочный токен amoCRM (до 5 лет, **рекомендуется**)
 
 > 💡 **Совет:** Используйте [долгосрочные токены](./LONG-TERM-TOKEN.md) для упрощения интеграции!
 
-## Запуск
-- Разработка (STDIO):
+### 🔐 Безопасность HTTP эндпоинтов (опционально)
+- `MCP_AUTH_TOKEN` — Bearer токен для защиты HTTP/Streamable эндпоинтов
+
+> ⚠️ **Важно:** Если вы используете HTTP или Streamable HTTP транспорты, настоятельно рекомендуется установить `MCP_AUTH_TOKEN` для защиты ваших данных от несанкционированного доступа!
+
+**Пример генерации безопасного токена:**
 ```bash
-npm run dev
+# Linux/macOS
+openssl rand -hex 32
+
+# Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
-- Прод: сборка и запуск:
+
+Подробнее: [SECURITY.md](./SECURITY.md)
+
+## Запуск
+
+### STDIO транспорт (для Claude Desktop)
 ```bash
+# Разработка
+npm run dev
+
+# Продакшн
 npm run build
 npm run start
+```
+
+### HTTP транспорт (для внешнего доступа)
+```bash
+# Разработка
+npm run dev:http
+
+# Продакшн
+npm run build
+npm run start:http
+```
+
+**Пример использования с токеном:**
+```bash
+# Установка токена
+export MCP_AUTH_TOKEN="your-secret-token-here"
+
+# Запуск сервера
+npm run start:http
+
+# Тестирование
+curl -H "Authorization: Bearer your-secret-token-here" \
+     http://localhost:8080/tools
+```
+
+### Streamable HTTP транспорт (для MCP клиентов с SSE)
+```bash
+# Разработка
+npm run dev:streamable
+
+# Продакшн
+npm run build
+npm run start:streamable
+```
+
+**Пример использования с токеном:**
+```bash
+# SSE подключение
+curl -H "Accept: text/event-stream" \
+     -H "Authorization: Bearer your-secret-token-here" \
+     http://localhost:8080/mcp
 ```
 
 ## Подключение MCP-клиента

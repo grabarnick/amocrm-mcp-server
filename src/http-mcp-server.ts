@@ -5,6 +5,7 @@ import { createAmoClient } from './amocrm/client.js';
 import { registerTools } from './mcp/tools.js';
 import { loadConfig } from './config.js';
 import { createTokenUpdater } from './do-env-updater.js';
+import { validateBearerToken, isPublicEndpoint } from './auth.js';
 
 // Функция для вызова MCP инструментов
 async function callMcpTool(toolName: string, args: any, amo: any) {
@@ -27,22 +28,23 @@ async function callMcpTool(toolName: string, args: any, amo: any) {
       const leadData = await amo.get(`/api/v4/leads/${id}?with=contacts,companies`);
       return { content: [{ type: 'text', text: JSON.stringify(leadData) }] };
       
-    case 'amocrm_createLead':
-      const leadPayload = args;
-      const createdLead = await amo.post('/api/v4/leads', [leadPayload]);
-      return { content: [{ type: 'text', text: JSON.stringify(createdLead) }] };
+    // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
+    // case 'amocrm_createLead':
+    //   const leadPayload = args;
+    //   const createdLead = await amo.post('/api/v4/leads', [leadPayload]);
+    //   return { content: [{ type: 'text', text: JSON.stringify(createdLead) }] };
       
-    case 'amocrm_updateLead':
-      const { id: leadId, ...updateData } = args;
-      if (!leadId) throw new Error('ID сделки обязателен');
-      const updatedLead = await amo.patch(`/api/v4/leads/${leadId}`, updateData);
-      return { content: [{ type: 'text', text: JSON.stringify(updatedLead) }] };
+    // case 'amocrm_updateLead':
+    //   const { id: leadId, ...updateData } = args;
+    //   if (!leadId) throw new Error('ID сделки обязателен');
+    //   const updatedLead = await amo.patch(`/api/v4/leads/${leadId}`, updateData);
+    //   return { content: [{ type: 'text', text: JSON.stringify(updatedLead) }] };
       
-    case 'amocrm_deleteLead':
-      const { id: deleteLeadId } = args;
-      if (!deleteLeadId) throw new Error('ID сделки обязателен');
-      await amo.delete(`/api/v4/leads/${deleteLeadId}`);
-      return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: 'Сделка удалена' }) }] };
+    // case 'amocrm_deleteLead':
+    //   const { id: deleteLeadId } = args;
+    //   if (!deleteLeadId) throw new Error('ID сделки обязателен');
+    //   await amo.delete(`/api/v4/leads/${deleteLeadId}`);
+    //   return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: 'Сделка удалена' }) }] };
       
     case 'amocrm_listContacts':
       const { page: contactPage = 1, limit: contactLimit = 25 } = args;
@@ -56,22 +58,23 @@ async function callMcpTool(toolName: string, args: any, amo: any) {
       const contactData = await amo.get(`/api/v4/contacts/${contactId}?with=leads,companies`);
       return { content: [{ type: 'text', text: JSON.stringify(contactData) }] };
       
-    case 'amocrm_createContact':
-      const contactPayload = args;
-      const createdContact = await amo.post('/api/v4/contacts', [contactPayload]);
-      return { content: [{ type: 'text', text: JSON.stringify(createdContact) }] };
+    // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
+    // case 'amocrm_createContact':
+    //   const contactPayload = args;
+    //   const createdContact = await amo.post('/api/v4/contacts', [contactPayload]);
+    //   return { content: [{ type: 'text', text: JSON.stringify(createdContact) }] };
       
-    case 'amocrm_updateContact':
-      const { id: updateContactId, ...contactUpdateData } = args;
-      if (!updateContactId) throw new Error('ID контакта обязателен');
-      const updatedContact = await amo.patch(`/api/v4/contacts/${updateContactId}`, contactUpdateData);
-      return { content: [{ type: 'text', text: JSON.stringify(updatedContact) }] };
+    // case 'amocrm_updateContact':
+    //   const { id: updateContactId, ...contactUpdateData } = args;
+    //   if (!updateContactId) throw new Error('ID контакта обязателен');
+    //   const updatedContact = await amo.patch(`/api/v4/contacts/${updateContactId}`, contactUpdateData);
+    //   return { content: [{ type: 'text', text: JSON.stringify(updatedContact) }] };
       
-    case 'amocrm_deleteContact':
-      const { id: deleteContactId } = args;
-      if (!deleteContactId) throw new Error('ID контакта обязателен');
-      await amo.delete(`/api/v4/contacts/${deleteContactId}`);
-      return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: 'Контакт удален' }) }] };
+    // case 'amocrm_deleteContact':
+    //   const { id: deleteContactId } = args;
+    //   if (!deleteContactId) throw new Error('ID контакта обязателен');
+    //   await amo.delete(`/api/v4/contacts/${deleteContactId}`);
+    //   return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: 'Контакт удален' }) }] };
       
     case 'amocrm_listCompanies':
       const { page: companyPage = 1, limit: companyLimit = 25 } = args;
@@ -85,22 +88,23 @@ async function callMcpTool(toolName: string, args: any, amo: any) {
       const companyData = await amo.get(`/api/v4/companies/${companyId}?with=leads,contacts`);
       return { content: [{ type: 'text', text: JSON.stringify(companyData) }] };
       
-    case 'amocrm_createCompany':
-      const companyPayload = args;
-      const createdCompany = await amo.post('/api/v4/companies', [companyPayload]);
-      return { content: [{ type: 'text', text: JSON.stringify(createdCompany) }] };
+    // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
+    // case 'amocrm_createCompany':
+    //   const companyPayload = args;
+    //   const createdCompany = await amo.post('/api/v4/companies', [companyPayload]);
+    //   return { content: [{ type: 'text', text: JSON.stringify(createdCompany) }] };
       
-    case 'amocrm_updateCompany':
-      const { id: updateCompanyId, ...companyUpdateData } = args;
-      if (!updateCompanyId) throw new Error('ID компании обязателен');
-      const updatedCompany = await amo.patch(`/api/v4/companies/${updateCompanyId}`, companyUpdateData);
-      return { content: [{ type: 'text', text: JSON.stringify(updatedCompany) }] };
+    // case 'amocrm_updateCompany':
+    //   const { id: updateCompanyId, ...companyUpdateData } = args;
+    //   if (!updateCompanyId) throw new Error('ID компании обязателен');
+    //   const updatedCompany = await amo.patch(`/api/v4/companies/${updateCompanyId}`, companyUpdateData);
+    //   return { content: [{ type: 'text', text: JSON.stringify(updatedCompany) }] };
       
-    case 'amocrm_deleteCompany':
-      const { id: deleteCompanyId } = args;
-      if (!deleteCompanyId) throw new Error('ID компании обязателен');
-      await amo.delete(`/api/v4/companies/${deleteCompanyId}`);
-      return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: 'Компания удалена' }) }] };
+    // case 'amocrm_deleteCompany':
+    //   const { id: deleteCompanyId } = args;
+    //   if (!deleteCompanyId) throw new Error('ID компании обязателен');
+    //   await amo.delete(`/api/v4/companies/${deleteCompanyId}`);
+    //   return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: 'Компания удалена' }) }] };
       
     case 'amocrm_getUsers':
       const usersData = await amo.get('/api/v4/users');
@@ -145,12 +149,19 @@ async function createHttpMcpServer() {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if (req.method === 'OPTIONS') {
       res.writeHead(200);
       res.end();
       return;
+    }
+
+    // Проверка авторизации для защищенных эндпоинтов
+    if (!isPublicEndpoint(req.url || '/')) {
+      if (!validateBearerToken(req, res, cfg.MCP_AUTH_TOKEN)) {
+        return; // validateBearerToken уже отправил 401 ответ
+      }
     }
 
     if (req.url === '/health' || req.url === '/') {
@@ -170,20 +181,21 @@ async function createHttpMcpServer() {
       res.end(JSON.stringify({
         tools: [
           'amocrm_listLeads',
-          'amocrm_getLead', 
-          'amocrm_createLead',
-          'amocrm_updateLead',
-          'amocrm_deleteLead',
+          'amocrm_getLead',
+          // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
+          // 'amocrm_createLead',
+          // 'amocrm_updateLead',
+          // 'amocrm_deleteLead',
           'amocrm_listContacts',
           'amocrm_getContact',
-          'amocrm_createContact',
-          'amocrm_updateContact',
-          'amocrm_deleteContact',
+          // 'amocrm_createContact',
+          // 'amocrm_updateContact',
+          // 'amocrm_deleteContact',
           'amocrm_listCompanies',
           'amocrm_getCompany',
-          'amocrm_createCompany',
-          'amocrm_updateCompany',
-          'amocrm_deleteCompany',
+          // 'amocrm_createCompany',
+          // 'amocrm_updateCompany',
+          // 'amocrm_deleteCompany',
           'amocrm_getAccount',
           'amocrm_getUsers',
           'amocrm_getPipelines'

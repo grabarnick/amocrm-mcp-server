@@ -6,6 +6,7 @@ import { registerTools } from './mcp/tools.js';
 import { loadConfig } from './config.js';
 import { createTokenUpdater } from './do-env-updater.js';
 import { v4 as uuidv4 } from 'uuid';
+import { validateBearerToken, isPublicEndpoint } from './auth.js';
 
 interface Session {
   id: string;
@@ -19,9 +20,11 @@ class StreamableHttpMcpServer {
   private server: http.Server;
   private amo: any;
   private mcp: McpServer;
+  private authToken?: string;
 
   constructor() {
     const cfg = loadConfig();
+    this.authToken = cfg.MCP_AUTH_TOKEN;
     
     // Определяем тип токена: долгосрочный или обычный
     const isLongTermToken = !!cfg.AMO_LONG_TERM_TOKEN;
@@ -78,7 +81,7 @@ class StreamableHttpMcpServer {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, MCP-Protocol-Version, Mcp-Session-Id');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, MCP-Protocol-Version, Mcp-Session-Id');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     if (req.method === 'OPTIONS') {
@@ -87,8 +90,15 @@ class StreamableHttpMcpServer {
       return;
     }
 
+    // Проверка авторизации для защищенных эндпоинтов
     const url = new URL(req.url || '/', `http://${req.headers.host}`);
     const path = url.pathname;
+    
+    if (!isPublicEndpoint(path)) {
+      if (!validateBearerToken(req, res, this.authToken)) {
+        return; // validateBearerToken уже отправил 401 ответ
+      }
+    }
 
     // MCP endpoint - основной endpoint для Streamable HTTP
     if (path === '/mcp') {
@@ -117,7 +127,8 @@ class StreamableHttpMcpServer {
           'amocrm_getAccount',
           'amocrm_listLeads',
           'amocrm_getLead',
-          'amocrm_updateLead',
+          // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
+          // 'amocrm_updateLead',
           'amocrm_getContact',
           'amocrm_listCompanies',
           'amocrm_getCompany'
@@ -381,20 +392,21 @@ class StreamableHttpMcpServer {
                     required: ['id']
                   }
                 },
-                {
-                  name: 'amocrm_updateLead',
-                  description: 'Обновить сделку в amoCRM',
-                  inputSchema: {
-                    type: 'object',
-                    properties: {
-                      id: { type: 'number', description: 'ID сделки' },
-                      name: { type: 'string', description: 'Название сделки' },
-                      price: { type: 'number', description: 'Бюджет сделки' },
-                      status_id: { type: 'number', description: 'ID статуса' }
-                    },
-                    required: ['id']
-                  }
-                },
+                // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
+                // {
+                //   name: 'amocrm_updateLead',
+                //   description: 'Обновить сделку в amoCRM',
+                //   inputSchema: {
+                //     type: 'object',
+                //     properties: {
+                //       id: { type: 'number', description: 'ID сделки' },
+                //       name: { type: 'string', description: 'Название сделки' },
+                //       price: { type: 'number', description: 'Бюджет сделки' },
+                //       status_id: { type: 'number', description: 'ID статуса' }
+                //     },
+                //     required: ['id']
+                //   }
+                // },
                 {
                   name: 'amocrm_getContact',
                   description: 'Получить контакт по ID',
@@ -483,13 +495,14 @@ class StreamableHttpMcpServer {
           result = { content: [{ type: 'text', text: JSON.stringify(leadData) }] };
           break;
 
-        case 'amocrm_updateLead':
-          const updateLeadId = args?.id;
-          if (!updateLeadId) throw new Error('Lead ID is required');
-          const { id: _, ...updateData } = args;
-          const updatedLeadData = await this.amo.patch(`/api/v4/leads/${updateLeadId}`, updateData);
-          result = { content: [{ type: 'text', text: JSON.stringify(updatedLeadData) }] };
-          break;
+        // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
+        // case 'amocrm_updateLead':
+        //   const updateLeadId = args?.id;
+        //   if (!updateLeadId) throw new Error('Lead ID is required');
+        //   const { id: _, ...updateData } = args;
+        //   const updatedLeadData = await this.amo.patch(`/api/v4/leads/${updateLeadId}`, updateData);
+        //   result = { content: [{ type: 'text', text: JSON.stringify(updatedLeadData) }] };
+        //   break;
 
         case 'amocrm_getContact':
           const contactId = args?.id;
