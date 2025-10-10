@@ -60,7 +60,17 @@ npm run test-api auth <скопированный_код>
 
 ### Решение
 
-**Для MCP Inspector и тестирования:**
+**Для DigitalOcean App Platform (Production):**
+✨ **Автоматическое обновление через DO API** - токены обновляются автоматически!
+
+📖 **См. полную инструкцию:** [DO-TOKEN-AUTO-UPDATE.md](./DO-TOKEN-AUTO-UPDATE.md)
+
+Быстрая настройка:
+1. Создайте DO API токен (с write доступом)
+2. Добавьте `DO_API_TOKEN` и `DO_APP_ID` в переменные окружения
+3. Токены будут автоматически обновляться! 🎉
+
+**Для MCP Inspector и тестирования (Development):**
 Всегда используйте `update-env-tokens.sh` после команд `test-api`:
 
 ```bash

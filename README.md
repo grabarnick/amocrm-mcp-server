@@ -154,6 +154,7 @@ npm run test-api create-lead "Тестовая сделка"
 - **[TEST-MCP.md](./TEST-MCP.md)** - Тестирование MCP сервера
 - **[TEST-API.md](./TEST-API.md)** - Тестирование AmoCRM API
 - **[OAUTH-GUIDE.md](./OAUTH-GUIDE.md)** - Руководство по OAuth авторизации
+- **[DO-TOKEN-AUTO-UPDATE.md](./DO-TOKEN-AUTO-UPDATE.md)** - 🆕 Автообновление токенов на DigitalOcean
 - **[TESTING-GUIDE.md](./TESTING-GUIDE.md)** - Полное руководство по тестированию
 
 #### Продвинутые примеры

@@ -4,6 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { createAmoClient } from './amocrm/client.js';
 import { registerTools } from './mcp/tools.js';
 import { loadConfig } from './config.js';
+import { createTokenUpdater } from './do-env-updater.js';
 import http from 'http';
 
 async function main() {
@@ -15,6 +16,11 @@ async function main() {
     redirectUri: cfg.AMO_REDIRECT_URI,
     accessToken: cfg.AMO_ACCESS_TOKEN,
     refreshToken: cfg.AMO_REFRESH_TOKEN,
+    // Автоматическое обновление токенов в DO App Platform
+    onTokensUpdated: async (tokens) => {
+      console.log('🔄 Токены обновлены, сохраняем в DO App Platform...');
+      await createTokenUpdater(tokens);
+    }
   });
 
   // В production режиме запускаем Streamable HTTP MCP сервер

@@ -4,6 +4,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { createAmoClient } from './amocrm/client.js';
 import { registerTools } from './mcp/tools.js';
 import { loadConfig } from './config.js';
+import { createTokenUpdater } from './do-env-updater.js';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Session {
@@ -28,6 +29,11 @@ class StreamableHttpMcpServer {
       redirectUri: cfg.AMO_REDIRECT_URI,
       accessToken: cfg.AMO_ACCESS_TOKEN,
       refreshToken: cfg.AMO_REFRESH_TOKEN,
+      // Автоматическое обновление токенов в DO App Platform
+      onTokensUpdated: async (tokens) => {
+        console.log('🔄 Токены обновлены, сохраняем в DO App Platform...');
+        await createTokenUpdater(tokens);
+      }
     });
 
     this.mcp = new McpServer({ name: 'amocrm-mcp-server', version: '0.1.0' });
