@@ -20,6 +20,9 @@ npm install
 - AMO_REDIRECT_URI — redirect URI, если используете Authorization Code Flow
 - AMO_ACCESS_TOKEN — access token (после первичного обмена)
 - AMO_REFRESH_TOKEN — refresh token (после первичного обмена)
+- AMO_LONG_TERM_TOKEN — долгосрочный токен amoCRM (до 5 лет, **рекомендуется**)
+
+> 💡 **Совет:** Используйте [долгосрочные токены](./LONG-TERM-TOKEN.md) для упрощения интеграции!
 
 ## Запуск
 - Разработка (STDIO):
