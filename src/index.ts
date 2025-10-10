@@ -17,26 +17,6 @@ async function main() {
     refreshToken: cfg.AMO_REFRESH_TOKEN,
   });
 
-  // Создаем простой HTTP-сервер для health checks
-  const server = http.createServer((req, res) => {
-    if (req.url === '/health' || req.url === '/') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ 
-        status: 'ok', 
-        service: 'amocrm-mcp-server',
-        timestamp: new Date().toISOString()
-      }));
-    } else {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Not found' }));
-    }
-  });
-
-  const PORT = process.env.PORT || 8080;
-  server.listen(PORT, () => {
-    console.log(`Health check server running on port ${PORT}`);
-  });
-
   // В production режиме запускаем HTTP MCP сервер
   if (process.env.NODE_ENV === 'production') {
     console.log('Starting HTTP MCP server in production mode');
