@@ -22,15 +22,44 @@ async function testHttpMcpServer() {
     console.log('✅ Доступные инструменты:', toolsData);
     console.log('');
 
-    // Тест 3: Вызов инструмента (пример)
-    console.log('3️⃣ Тест вызова инструмента...');
+    // Тест 3: Вызов реального инструмента
+    console.log('3️⃣ Тест вызова реального инструмента (amocrm_getAccount)...');
     const callResponse = await fetch(`${baseUrl}/call/amocrm_getAccount`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     });
     const callData = await callResponse.json();
-    console.log('✅ Результат вызова:', callData);
+    
+    if (callData.success) {
+      console.log('✅ Результат вызова:', {
+        tool: callData.tool,
+        success: callData.success,
+        resultPreview: callData.result?.content?.[0]?.text?.substring(0, 200) + '...'
+      });
+    } else {
+      console.log('❌ Ошибка вызова:', callData);
+    }
+    console.log('');
+
+    // Тест 4: Вызов инструмента со списком сделок
+    console.log('4️⃣ Тест вызова amocrm_listLeads...');
+    const leadsResponse = await fetch(`${baseUrl}/call/amocrm_listLeads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page: 1, limit: 5 })
+    });
+    const leadsData = await leadsResponse.json();
+    
+    if (leadsData.success) {
+      console.log('✅ Результат вызова leads:', {
+        tool: leadsData.tool,
+        success: leadsData.success,
+        resultPreview: leadsData.result?.content?.[0]?.text?.substring(0, 200) + '...'
+      });
+    } else {
+      console.log('❌ Ошибка вызова leads:', leadsData);
+    }
     console.log('');
 
     console.log('🎉 Все тесты HTTP MCP сервера прошли успешно!');
