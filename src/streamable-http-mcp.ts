@@ -45,13 +45,13 @@ class StreamableHttpMcpServer {
       return true;
     }
     
-    // Для production - проверяем Origin заголовок
-    if (!origin) {
-      console.warn('No Origin header provided');
-      return false;
+    // Для облачного развертывания - разрешаем все запросы
+    // В production здесь можно добавить проверку разрешенных доменов
+    if (host?.includes('ondigitalocean.app') || host?.includes('digitalocean.com')) {
+      return true;
     }
     
-    // Здесь можно добавить проверку разрешенных доменов
+    // Если Origin не указан, но это не localhost - разрешаем для тестирования
     return true;
   }
 
