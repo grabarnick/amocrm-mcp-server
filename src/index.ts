@@ -37,8 +37,14 @@ async function main() {
     console.log(`Health check server running on port ${PORT}`);
   });
 
-  // Запускаем MCP сервер только если не в облаке (где нужен только HTTP)
-  if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'production') {
+  // В production режиме запускаем HTTP MCP сервер
+  if (process.env.NODE_ENV === 'production') {
+    console.log('Starting HTTP MCP server in production mode');
+    // Импортируем и запускаем HTTP MCP сервер
+    const { startHttpMcpServer } = await import('./http-mcp-server.js');
+    await startHttpMcpServer();
+  } else {
+    // В dev режиме запускаем обычный stdio MCP сервер
     const mcp = new McpServer({ name: 'amocrm-mcp-server', version: '0.1.0' });
     registerTools(mcp, amo);
     const transport = new StdioServerTransport();
