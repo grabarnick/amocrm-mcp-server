@@ -7,8 +7,8 @@ WORKDIR /app
 # Копируем package.json и package-lock.json
 COPY package*.json ./
 
-# Устанавливаем зависимости
-RUN npm ci --only=production
+# Устанавливаем ВСЕ зависимости (включая dev для сборки)
+RUN npm ci
 
 # Копируем исходный код
 COPY src/ ./src/
@@ -16,6 +16,9 @@ COPY tsconfig.json ./
 
 # Собираем TypeScript
 RUN npm run build
+
+# Удаляем dev-зависимости для уменьшения размера образа
+RUN npm ci --only=production && npm cache clean --force
 
 # Создаем пользователя для безопасности
 RUN addgroup -g 1001 -S nodejs
