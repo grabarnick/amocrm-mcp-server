@@ -117,15 +117,21 @@ async function callMcpTool(toolName: string, args: any, amo: any) {
 
 async function createHttpMcpServer() {
   const cfg = loadConfig();
+  
+  // Определяем тип токена: долгосрочный или обычный
+  const isLongTermToken = !!cfg.AMO_LONG_TERM_TOKEN;
+  const accessToken = isLongTermToken ? cfg.AMO_LONG_TERM_TOKEN : cfg.AMO_ACCESS_TOKEN;
+  
   const amo = createAmoClient({
     baseUrl: cfg.AMO_BASE_URL,
     clientId: cfg.AMO_CLIENT_ID,
     clientSecret: cfg.AMO_CLIENT_SECRET,
     redirectUri: cfg.AMO_REDIRECT_URI,
-    accessToken: cfg.AMO_ACCESS_TOKEN,
+    accessToken: accessToken,
     refreshToken: cfg.AMO_REFRESH_TOKEN,
-    // Автоматическое обновление токенов в DO App Platform
-    onTokensUpdated: async (tokens) => {
+    isLongTermToken: isLongTermToken,
+    // Автоматическое обновление токенов в DO App Platform (только для обычных токенов)
+    onTokensUpdated: isLongTermToken ? undefined : async (tokens) => {
       console.log('🔄 Токены обновлены, сохраняем в DO App Platform...');
       await createTokenUpdater(tokens);
     }

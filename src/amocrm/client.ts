@@ -8,6 +8,8 @@ export type AmoClientOptions = {
   accessToken?: string;
   refreshToken?: string;
   onTokensUpdated?: (tokens: OAuthTokens) => void;
+  // Поддержка долгосрочных токенов
+  isLongTermToken?: boolean;
 };
 
 export type OAuthTokens = {
@@ -39,6 +41,15 @@ export function createAmoClient(options: AmoClientOptions): AmoClient {
   let tokenExpiresAt = 0;
 
   async function refreshTokensIfNeeded(): Promise<void> {
+    // Для долгосрочных токенов обновление не требуется
+    if (options.isLongTermToken) {
+      if (!accessToken) {
+        throw new Error('Долгосрочный токен не установлен. Проверьте AMO_ACCESS_TOKEN.');
+      }
+      return;
+    }
+
+    // Логика для обычных токенов с refresh_token
     const now = Date.now() / 1000;
     if (accessToken && now < tokenExpiresAt - 30) return;
     if (!refreshToken) throw new Error('Нет refresh_token. Выполните OAuth2 обмен кодов и сохраните токены.');

@@ -7,6 +7,8 @@ const EnvSchema = z.object({
   AMO_REDIRECT_URI: z.string().url().optional(),
   AMO_ACCESS_TOKEN: z.string().optional(),
   AMO_REFRESH_TOKEN: z.string().optional(),
+  // Поддержка долгосрочных токенов
+  AMO_LONG_TERM_TOKEN: z.string().optional(),
   // DigitalOcean App Platform API (опционально, для автообновления токенов)
   DO_API_TOKEN: z.string().optional(),
   DO_APP_ID: z.string().optional(),
