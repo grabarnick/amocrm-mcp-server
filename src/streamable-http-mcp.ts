@@ -102,10 +102,13 @@ class StreamableHttpMcpServer {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         tools: [
-          'amocrm_listLeads', 'amocrm_getLead', 'amocrm_createLead', 'amocrm_updateLead', 'amocrm_deleteLead',
-          'amocrm_listContacts', 'amocrm_getContact', 'amocrm_createContact', 'amocrm_updateContact', 'amocrm_deleteContact',
-          'amocrm_listCompanies', 'amocrm_getCompany', 'amocrm_createCompany', 'amocrm_updateCompany', 'amocrm_deleteCompany',
-          'amocrm_getAccount', 'amocrm_getUsers', 'amocrm_getPipelines'
+          'amocrm_getAccount',
+          'amocrm_listLeads',
+          'amocrm_getLead',
+          'amocrm_updateLead',
+          'amocrm_getContact',
+          'amocrm_listCompanies',
+          'amocrm_getCompany'
         ]
       }));
       return;
@@ -337,6 +340,14 @@ class StreamableHttpMcpServer {
             result: {
               tools: [
                 {
+                  name: 'amocrm_getAccount',
+                  description: 'Получить информацию об аккаунте amoCRM',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {}
+                  }
+                },
+                {
                   name: 'amocrm_listLeads',
                   description: 'Получить список сделок amoCRM с пагинацией',
                   inputSchema: {
@@ -348,14 +359,63 @@ class StreamableHttpMcpServer {
                   }
                 },
                 {
-                  name: 'amocrm_getAccount',
-                  description: 'Получить информацию об аккаунте amoCRM',
+                  name: 'amocrm_getLead',
+                  description: 'Получить сделку по ID',
                   inputSchema: {
                     type: 'object',
-                    properties: {}
+                    properties: {
+                      id: { type: 'number', description: 'ID сделки' }
+                    },
+                    required: ['id']
+                  }
+                },
+                {
+                  name: 'amocrm_updateLead',
+                  description: 'Обновить сделку в amoCRM',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'number', description: 'ID сделки' },
+                      name: { type: 'string', description: 'Название сделки' },
+                      price: { type: 'number', description: 'Бюджет сделки' },
+                      status_id: { type: 'number', description: 'ID статуса' }
+                    },
+                    required: ['id']
+                  }
+                },
+                {
+                  name: 'amocrm_getContact',
+                  description: 'Получить контакт по ID',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'number', description: 'ID контакта' }
+                    },
+                    required: ['id']
+                  }
+                },
+                {
+                  name: 'amocrm_listCompanies',
+                  description: 'Получить список компаний amoCRM с пагинацией',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      page: { type: 'number', description: 'Номер страницы (начиная с 1)' },
+                      limit: { type: 'number', description: 'Количество записей на странице (1-250)' }
+                    }
+                  }
+                },
+                {
+                  name: 'amocrm_getCompany',
+                  description: 'Получить компанию по ID',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'number', description: 'ID компании' }
+                    },
+                    required: ['id']
                   }
                 }
-                // Добавьте остальные инструменты здесь
               ]
             }
           };
@@ -403,8 +463,43 @@ class StreamableHttpMcpServer {
           const leadsData = await this.amo.get(`/api/v4/leads?limit=${limit}&page=${page}&with=contacts`);
           result = { content: [{ type: 'text', text: JSON.stringify({ offset, page, limit, data: leadsData }) }] };
           break;
+
+        case 'amocrm_getLead':
+          const leadId = args?.id;
+          if (!leadId) throw new Error('Lead ID is required');
+          const leadData = await this.amo.get(`/api/v4/leads/${leadId}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(leadData) }] };
+          break;
+
+        case 'amocrm_updateLead':
+          const updateLeadId = args?.id;
+          if (!updateLeadId) throw new Error('Lead ID is required');
+          const { id: _, ...updateData } = args;
+          const updatedLeadData = await this.amo.patch(`/api/v4/leads/${updateLeadId}`, updateData);
+          result = { content: [{ type: 'text', text: JSON.stringify(updatedLeadData) }] };
+          break;
+
+        case 'amocrm_getContact':
+          const contactId = args?.id;
+          if (!contactId) throw new Error('Contact ID is required');
+          const contactData = await this.amo.get(`/api/v4/contacts/${contactId}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(contactData) }] };
+          break;
+
+        case 'amocrm_listCompanies':
+          const companyPage = args?.page || 1;
+          const companyLimit = args?.limit || 25;
+          const companiesData = await this.amo.get(`/api/v4/companies?limit=${companyLimit}&page=${companyPage}`);
+          result = { content: [{ type: 'text', text: JSON.stringify({ page: companyPage, limit: companyLimit, data: companiesData }) }] };
+          break;
+
+        case 'amocrm_getCompany':
+          const companyId = args?.id;
+          if (!companyId) throw new Error('Company ID is required');
+          const companyData = await this.amo.get(`/api/v4/companies/${companyId}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(companyData) }] };
+          break;
           
-        // Добавьте остальные инструменты здесь
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
