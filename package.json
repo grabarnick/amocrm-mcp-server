@@ -6,11 +6,14 @@
   "description": "MCP сервер для интеграции с amoCRM (CRUD по leads/contacts/notes, OAuth2)",
   "scripts": {
     "dev": "node --loader ts-node/esm src/index.ts",
+    "dev:http": "node --loader ts-node/esm src/http-index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
+    "start:http": "node dist/http-index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test-api": "node --loader ts-node/esm test-api.ts",
-    "test-mcp": "node --loader ts-node/esm test-mcp.ts"
+    "test-mcp": "node --loader ts-node/esm test-mcp.ts",
+    "test-http": "node --loader ts-node/esm test-http-mcp.ts"
   },
   "engines": {
     "node": ">=18.17"
