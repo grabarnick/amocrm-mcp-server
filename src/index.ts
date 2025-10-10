@@ -4,6 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { createAmoClient } from './amocrm/client.js';
 import { registerTools } from './mcp/tools.js';
 import { loadConfig } from './config.js';
+import http from 'http';
 
 async function main() {
   const cfg = loadConfig();
@@ -16,10 +17,33 @@ async function main() {
     refreshToken: cfg.AMO_REFRESH_TOKEN,
   });
 
-  const mcp = new McpServer({ name: 'amocrm-mcp-server', version: '0.1.0' });
-  registerTools(mcp, amo);
-  const transport = new StdioServerTransport();
-  await mcp.connect(transport);
+  // Создаем простой HTTP-сервер для health checks
+  const server = http.createServer((req, res) => {
+    if (req.url === '/health' || req.url === '/') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        status: 'ok', 
+        service: 'amocrm-mcp-server',
+        timestamp: new Date().toISOString()
+      }));
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Not found' }));
+    }
+  });
+
+  const PORT = process.env.PORT || 8080;
+  server.listen(PORT, () => {
+    console.log(`Health check server running on port ${PORT}`);
+  });
+
+  // Запускаем MCP сервер только если не в облаке (где нужен только HTTP)
+  if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'production') {
+    const mcp = new McpServer({ name: 'amocrm-mcp-server', version: '0.1.0' });
+    registerTools(mcp, amo);
+    const transport = new StdioServerTransport();
+    await mcp.connect(transport);
+  }
 }
 
 main().catch((err) => {
