@@ -3,6 +3,20 @@ import type { AmoClient } from '../amocrm/client.js';
 
 export function registerTools(server: McpServer, amo: AmoClient) {
   server.tool(
+    'amocrm_getAccount',
+    'Получить информацию об аккаунте amoCRM',
+    {
+      type: 'object',
+      properties: {},
+    },
+    async (args) => {
+      await amo.ensureAuth();
+      const data = await amo.get('/api/v4/account');
+      return { content: [{ type: 'text', text: JSON.stringify(data) }] };
+    }
+  );
+
+  server.tool(
     'amocrm_listLeads',
     'Получить список сделок amoCRM с пагинацией',
     {

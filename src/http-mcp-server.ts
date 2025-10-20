@@ -7,6 +7,41 @@ import { loadConfig } from './config.js';
 import { createTokenUpdater } from './do-env-updater.js';
 import { validateBearerToken, isPublicEndpoint } from './auth.js';
 
+// Функция для получения списка доступных инструментов
+function getToolsList(): string[] {
+  return [
+    'amocrm_getAccount',
+    'amocrm_listLeads',
+    'amocrm_getLead',
+    'amocrm_createLead',
+    'amocrm_updateLead',
+    'amocrm_deleteLead',
+    'amocrm_searchLeads',
+    'amocrm_linkLeadToContact',
+    'amocrm_linkLeadToCompany',
+    'amocrm_listPipelines',
+    'amocrm_getPipeline',
+    'amocrm_moveLeadToStatus',
+    'amocrm_listContacts',
+    'amocrm_getContact',
+    'amocrm_createContact',
+    'amocrm_listCompanies',
+    'amocrm_getCompany',
+    'amocrm_createCompany',
+    'amocrm_updateCompany',
+    'amocrm_deleteCompany',
+    'amocrm_searchCompanies',
+    'amocrm_listTasks',
+    'amocrm_createTask',
+    'amocrm_updateTask',
+    'amocrm_completeTask',
+    'amocrm_listUsers',
+    'amocrm_getUser',
+    'amocrm_createNote',
+    'amocrm_exchangeAuthCode'
+  ];
+}
+
 // Функция для вызова MCP инструментов
 async function callMcpTool(toolName: string, args: any, amo: any) {
   await amo.ensureAuth();
@@ -177,30 +212,9 @@ async function createHttpMcpServer() {
 
     if (req.url === '/tools' && req.method === 'GET') {
       // Возвращаем список доступных инструментов
+      const tools = getToolsList();
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        tools: [
-          'amocrm_listLeads',
-          'amocrm_getLead',
-          // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
-          // 'amocrm_createLead',
-          // 'amocrm_updateLead',
-          // 'amocrm_deleteLead',
-          'amocrm_listContacts',
-          'amocrm_getContact',
-          // 'amocrm_createContact',
-          // 'amocrm_updateContact',
-          // 'amocrm_deleteContact',
-          'amocrm_listCompanies',
-          'amocrm_getCompany',
-          // 'amocrm_createCompany',
-          // 'amocrm_updateCompany',
-          // 'amocrm_deleteCompany',
-          'amocrm_getAccount',
-          'amocrm_getUsers',
-          'amocrm_getPipelines'
-        ]
-      }));
+      res.end(JSON.stringify({ tools }));
       return;
     }
 
