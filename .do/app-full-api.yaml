@@ -1,0 +1,59 @@
+name: amocrm-mcp-full-api
+region: nyc
+
+services:
+  - name: api
+    github:
+      repo: grabarnick/amocrm-mcp-server
+      branch: full-api-access
+      deploy_on_push: true
+    build_command: npm run build
+    run_command: node dist/streamable-index.js
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    envs:
+    - key: NODE_ENV
+      value: production
+    - key: PORT
+      value: "8080"
+    - key: AMO_BASE_URL
+      value: ${AMO_BASE_URL}
+      scope: RUN_TIME
+      type: SECRET
+    - key: AMO_CLIENT_ID
+      value: ${AMO_CLIENT_ID}
+      scope: RUN_TIME
+      type: SECRET
+    - key: AMO_CLIENT_SECRET
+      value: ${AMO_CLIENT_SECRET}
+      scope: RUN_TIME
+      type: SECRET
+    - key: AMO_REDIRECT_URI
+      value: ${AMO_REDIRECT_URI}
+      scope: RUN_TIME
+      type: SECRET
+    - key: AMO_ACCESS_TOKEN
+      value: ${AMO_ACCESS_TOKEN}
+      scope: RUN_TIME
+      type: SECRET
+    - key: AMO_REFRESH_TOKEN
+      value: ${AMO_REFRESH_TOKEN}
+      scope: RUN_TIME
+      type: SECRET
+    - key: AMO_LONG_TERM_TOKEN
+      value: ${AMO_LONG_TERM_TOKEN}
+      scope: RUN_TIME
+      type: SECRET
+    - key: MCP_AUTH_TOKEN
+      value: ${MCP_AUTH_TOKEN}
+      scope: RUN_TIME
+      type: SECRET
+    - key: DO_API_TOKEN
+      value: ${DO_API_TOKEN}
+      scope: RUN_TIME
+      type: SECRET
+    - key: DO_APP_ID
+      value: ${DO_APP_ID}
+      scope: RUN_TIME
+      type: SECRET
