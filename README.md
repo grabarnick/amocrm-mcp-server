@@ -131,34 +131,180 @@ curl -H "Accept: text/event-stream" \
 4) Далее сервер автоматически обновляет `access_token` по `refresh_token`.
 
 ## Доступные инструменты
-- amocrm.listLeads({ page?: number, limit?: number })
-- amocrm.createLead({ name, price?, pipeline_id?, status_id? } | Array<...>)
-- amocrm.getContact({ id })
-- amocrm.listContacts({ page?: number, limit?: number })
-- amocrm.createContact({ name } | Array<...>)
-- amocrm.createNote({ entity: 'leads'|'contacts'|'companies', payload: [...] })
-- amocrm.exchangeAuthCode({ code, redirect_uri? })
 
-### Примеры
-- Получить сделки:
+### 🔐 OAuth авторизация
+- `amocrm.exchangeAuthCode({ code, redirect_uri? })` - Обменять authorization code на токены OAuth2
+
+### 📋 Сделки (Leads)
+- `amocrm.listLeads({ page?, limit? })` - Получить список сделок с пагинацией
+- `amocrm.getLead({ id })` - Получить конкретную сделку по ID
+- `amocrm.createLead({ name, price?, pipeline_id?, status_id? } | Array<...>)` - Создать новую сделку
+- `amocrm.updateLead({ id, name?, price?, pipeline_id?, status_id?, responsible_user_id?, custom_fields_values? })` - Обновить существующую сделку
+- `amocrm.deleteLead({ id })` - Удалить сделку
+- `amocrm.searchLeads({ query?, status_id?, pipeline_id?, responsible_user_id?, limit? })` - Поиск сделок по фильтрам
+- `amocrm.linkLeadToContact({ lead_id, contact_id })` - Связать сделку с контактом
+- `amocrm.linkLeadToCompany({ lead_id, company_id })` - Связать сделку с компанией
+
+### 🎯 Воронки и этапы (Pipelines)
+- `amocrm.listPipelines()` - Получить список всех воронок
+- `amocrm.getPipeline({ id })` - Получить конкретную воронку с этапами
+- `amocrm.moveLeadToStatus({ lead_id, status_id, pipeline_id? })` - Переместить сделку в другой статус
+
+### 🏢 Компании (Companies)
+- `amocrm.listCompanies({ page?, limit? })` - Получить список компаний с пагинацией
+- `amocrm.getCompany({ id })` - Получить компанию по ID
+- `amocrm.createCompany({ name, custom_fields_values? } | Array<...>)` - Создать новую компанию
+- `amocrm.updateCompany({ id, name?, custom_fields_values? })` - Обновить существующую компанию
+- `amocrm.deleteCompany({ id })` - Удалить компанию
+- `amocrm.searchCompanies({ query?, limit? })` - Поиск компаний
+
+### 👥 Контакты (Contacts)
+- `amocrm.listContacts({ page?, limit? })` - Получить список контактов
+- `amocrm.getContact({ id })` - Получить контакт по ID
+- `amocrm.createContact({ name } | Array<...>)` - Создать новый контакт
+
+### ✅ Задачи (Tasks)
+- `amocrm.listTasks({ entity_type?, entity_id?, responsible_user_id?, is_completed?, limit? })` - Получить список задач
+- `amocrm.createTask({ entity_type, entity_id, text, complete_till_at, responsible_user_id?, task_type_id? } | Array<...>)` - Создать новую задачу
+- `amocrm.updateTask({ id, text?, complete_till_at?, is_completed?, responsible_user_id? })` - Обновить задачу
+- `amocrm.completeTask({ id })` - Отметить задачу как выполненную
+
+### 👤 Пользователи (Users)
+- `amocrm.listUsers()` - Получить список пользователей аккаунта
+- `amocrm.getUser({ id })` - Получить пользователя по ID
+
+### 📝 Заметки (Notes)
+- `amocrm.createNote({ entity: 'leads'|'contacts'|'companies', payload: [...] })` - Создать заметку для сущности
+
+### Примеры использования
+
+#### Сделки
 ```json
+// Получить список сделок
 {
   "tool": "amocrm.listLeads",
   "arguments": { "page": 1, "limit": 25 }
 }
-```
-- Создать сделку:
-```json
+
+// Получить конкретную сделку
+{
+  "tool": "amocrm.getLead",
+  "arguments": { "id": 123456 }
+}
+
+// Создать сделку
 {
   "tool": "amocrm.createLead",
-  "arguments": { "name": "Новая сделка", "price": 10000 }
+  "arguments": { 
+    "name": "Новая сделка", 
+    "price": 10000,
+    "pipeline_id": 123,
+    "status_id": 456
+  }
+}
+
+// Обновить сделку
+{
+  "tool": "amocrm.updateLead",
+  "arguments": { 
+    "id": 123456,
+    "price": 15000,
+    "status_id": 789
+  }
+}
+
+// Поиск сделок
+{
+  "tool": "amocrm.searchLeads",
+  "arguments": { 
+    "query": "важн",
+    "pipeline_id": 123,
+    "limit": 50
+  }
+}
+
+// Связать сделку с контактом
+{
+  "tool": "amocrm.linkLeadToContact",
+  "arguments": { 
+    "lead_id": 123456,
+    "contact_id": 789012
+  }
 }
 ```
-- Получить контакт:
+
+#### Воронки
 ```json
+// Получить все воронки
 {
-  "tool": "amocrm.getContact",
-  "arguments": { "id": 123456 }
+  "tool": "amocrm.listPipelines",
+  "arguments": {}
+}
+
+// Получить конкретную воронку
+{
+  "tool": "amocrm.getPipeline",
+  "arguments": { "id": 123 }
+}
+
+// Переместить сделку в другой статус
+{
+  "tool": "amocrm.moveLeadToStatus",
+  "arguments": { 
+    "lead_id": 123456,
+    "status_id": 789
+  }
+}
+```
+
+#### Компании
+```json
+// Получить список компаний
+{
+  "tool": "amocrm.listCompanies",
+  "arguments": { "page": 1, "limit": 25 }
+}
+
+// Создать компанию
+{
+  "tool": "amocrm.createCompany",
+  "arguments": { "name": "ООО Рога и Копыта" }
+}
+
+// Поиск компаний
+{
+  "tool": "amocrm.searchCompanies",
+  "arguments": { "query": "рога" }
+}
+```
+
+#### Задачи
+```json
+// Создать задачу для сделки
+{
+  "tool": "amocrm.createTask",
+  "arguments": {
+    "entity_type": "leads",
+    "entity_id": 123456,
+    "text": "Позвонить клиенту",
+    "complete_till_at": 1704067200
+  }
+}
+
+// Получить задачи для сделки
+{
+  "tool": "amocrm.listTasks",
+  "arguments": {
+    "entity_type": "leads",
+    "entity_id": 123456,
+    "is_completed": false
+  }
+}
+
+// Отметить задачу как выполненную
+{
+  "tool": "amocrm.completeTask",
+  "arguments": { "id": 789012 }
 }
 ```
 
