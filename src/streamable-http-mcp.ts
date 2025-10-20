@@ -127,9 +127,11 @@ class StreamableHttpMcpServer {
           'amocrm_getAccount',
           'amocrm_listLeads',
           'amocrm_getLead',
-          // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
-          // 'amocrm_updateLead',
+          'amocrm_createLead',
           'amocrm_getContact',
+          'amocrm_listContacts',
+          'amocrm_createContact',
+          'amocrm_createNote',
           'amocrm_listCompanies',
           'amocrm_getCompany'
         ]
@@ -392,21 +394,20 @@ class StreamableHttpMcpServer {
                     required: ['id']
                   }
                 },
-                // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
-                // {
-                //   name: 'amocrm_updateLead',
-                //   description: 'Обновить сделку в amoCRM',
-                //   inputSchema: {
-                //     type: 'object',
-                //     properties: {
-                //       id: { type: 'number', description: 'ID сделки' },
-                //       name: { type: 'string', description: 'Название сделки' },
-                //       price: { type: 'number', description: 'Бюджет сделки' },
-                //       status_id: { type: 'number', description: 'ID статуса' }
-                //     },
-                //     required: ['id']
-                //   }
-                // },
+                {
+                  name: 'amocrm_createLead',
+                  description: 'Создать новую сделку в amoCRM',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string', description: 'Название сделки' },
+                      price: { type: 'number', description: 'Бюджет сделки' },
+                      pipeline_id: { type: 'number', description: 'ID воронки' },
+                      status_id: { type: 'number', description: 'ID статуса' }
+                    },
+                    required: ['name']
+                  }
+                },
                 {
                   name: 'amocrm_getContact',
                   description: 'Получить контакт по ID',
@@ -416,6 +417,47 @@ class StreamableHttpMcpServer {
                       id: { type: 'number', description: 'ID контакта' }
                     },
                     required: ['id']
+                  }
+                },
+                {
+                  name: 'amocrm_listContacts',
+                  description: 'Получить список контактов amoCRM с пагинацией',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      page: { type: 'number', description: 'Номер страницы (начиная с 1)' },
+                      limit: { type: 'number', description: 'Количество записей на странице (1-250)' }
+                    }
+                  }
+                },
+                {
+                  name: 'amocrm_createContact',
+                  description: 'Создать новый контакт в amoCRM',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string', description: 'Имя контакта' }
+                    },
+                    required: ['name']
+                  }
+                },
+                {
+                  name: 'amocrm_createNote',
+                  description: 'Создать заметку для сущности (leads/contacts/companies)',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      entity: { 
+                        type: 'string', 
+                        enum: ['leads', 'contacts', 'companies'],
+                        description: 'Тип сущности' 
+                      },
+                      payload: { 
+                        type: 'array',
+                        description: 'Массив заметок для создания'
+                      }
+                    },
+                    required: ['entity', 'payload']
                   }
                 },
                 {
@@ -495,20 +537,37 @@ class StreamableHttpMcpServer {
           result = { content: [{ type: 'text', text: JSON.stringify(leadData) }] };
           break;
 
-        // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
-        // case 'amocrm_updateLead':
-        //   const updateLeadId = args?.id;
-        //   if (!updateLeadId) throw new Error('Lead ID is required');
-        //   const { id: _, ...updateData } = args;
-        //   const updatedLeadData = await this.amo.patch(`/api/v4/leads/${updateLeadId}`, updateData);
-        //   result = { content: [{ type: 'text', text: JSON.stringify(updatedLeadData) }] };
-        //   break;
+        case 'amocrm_createLead':
+          const createLeadPayload = Array.isArray(args) ? args : [args];
+          const createLeadData = await this.amo.post('/api/v4/leads', createLeadPayload);
+          result = { content: [{ type: 'text', text: JSON.stringify(createLeadData) }] };
+          break;
 
         case 'amocrm_getContact':
           const contactId = args?.id;
           if (!contactId) throw new Error('Contact ID is required');
           const contactData = await this.amo.get(`/api/v4/contacts/${contactId}`);
           result = { content: [{ type: 'text', text: JSON.stringify(contactData) }] };
+          break;
+
+        case 'amocrm_listContacts':
+          const contactPage = args?.page || 1;
+          const contactLimit = args?.limit || 25;
+          const contactsListData = await this.amo.get(`/api/v4/contacts?limit=${contactLimit}&page=${contactPage}`);
+          result = { content: [{ type: 'text', text: JSON.stringify({ page: contactPage, limit: contactLimit, data: contactsListData }) }] };
+          break;
+
+        case 'amocrm_createContact':
+          const createContactPayload = Array.isArray(args) ? args : [args];
+          const createContactData = await this.amo.post('/api/v4/contacts', createContactPayload);
+          result = { content: [{ type: 'text', text: JSON.stringify(createContactData) }] };
+          break;
+
+        case 'amocrm_createNote':
+          const { entity, payload } = args;
+          if (!entity || !payload) throw new Error('Entity and payload are required');
+          const noteData = await this.amo.post(`/api/v4/${entity}/notes`, payload);
+          result = { content: [{ type: 'text', text: JSON.stringify(noteData) }] };
           break;
 
         case 'amocrm_listCompanies':

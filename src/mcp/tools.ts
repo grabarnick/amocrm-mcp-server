@@ -21,27 +21,26 @@ export function registerTools(server: McpServer, amo: AmoClient) {
     }
   );
 
-  // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
-  // server.tool(
-  //   'amocrm_createLead',
-  //   'Создать новую сделку в amoCRM',
-  //   {
-  //     type: 'object',
-  //     properties: {
-  //       name: { type: 'string', description: 'Название сделки' },
-  //       price: { type: 'number', description: 'Бюджет сделки' },
-  //       pipeline_id: { type: 'number', description: 'ID воронки' },
-  //       status_id: { type: 'number', description: 'ID статуса' },
-  //     },
-  //     required: ['name'],
-  //   },
-  //   async (args) => {
-  //     await amo.ensureAuth();
-  //     const payload = Array.isArray(args) ? args : [args];
-  //     const data = await amo.post('/api/v4/leads', payload);
-  //     return { content: [{ type: 'text', text: JSON.stringify(data) }] };
-  //   }
-  // );
+  server.tool(
+    'amocrm_createLead',
+    'Создать новую сделку в amoCRM',
+    {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Название сделки' },
+        price: { type: 'number', description: 'Бюджет сделки' },
+        pipeline_id: { type: 'number', description: 'ID воронки' },
+        status_id: { type: 'number', description: 'ID статуса' },
+      },
+      required: ['name'],
+    },
+    async (args) => {
+      await amo.ensureAuth();
+      const payload = Array.isArray(args) ? args : [args];
+      const data = await amo.post('/api/v4/leads', payload);
+      return { content: [{ type: 'text', text: JSON.stringify(data) }] };
+    }
+  );
 
   server.tool(
     'amocrm_getContact',
@@ -79,51 +78,49 @@ export function registerTools(server: McpServer, amo: AmoClient) {
     }
   );
 
-  // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
-  // server.tool(
-  //   'amocrm_createContact',
-  //   'Создать новый контакт в amoCRM',
-  //   {
-  //     type: 'object',
-  //     properties: {
-  //       name: { type: 'string', description: 'Имя контакта' },
-  //     },
-  //     required: ['name'],
-  //   },
-  //   async (args) => {
-  //     await amo.ensureAuth();
-  //     const payload = Array.isArray(args) ? args : [args];
-  //     const data = await amo.post('/api/v4/contacts', payload);
-  //     return { content: [{ type: 'text', text: JSON.stringify(data) }] };
-  //   }
-  // );
+  server.tool(
+    'amocrm_createContact',
+    'Создать новый контакт в amoCRM',
+    {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Имя контакта' },
+      },
+      required: ['name'],
+    },
+    async (args) => {
+      await amo.ensureAuth();
+      const payload = Array.isArray(args) ? args : [args];
+      const data = await amo.post('/api/v4/contacts', payload);
+      return { content: [{ type: 'text', text: JSON.stringify(data) }] };
+    }
+  );
 
-  // ВРЕМЕННО ОТКЛЮЧЕНО: методы на запись
-  // server.tool(
-  //   'amocrm_createNote',
-  //   'Создать заметку для сущности (leads/contacts/companies)',
-  //   {
-  //     type: 'object',
-  //     properties: {
-  //       entity: { 
-  //         type: 'string', 
-  //         enum: ['leads', 'contacts', 'companies'],
-  //         description: 'Тип сущности' 
-  //       },
-  //       payload: { 
-  //         type: 'array',
-  //         description: 'Массив заметок для создания'
-  //       },
-  //     },
-  //     required: ['entity', 'payload'],
-  //   },
-  //   async (args) => {
-  //     await amo.ensureAuth();
-  //     const { entity, payload } = args;
-  //     const data = await amo.post(`/api/v4/${entity}/notes`, payload);
-  //     return { content: [{ type: 'text', text: JSON.stringify(data) }] };
-  //   }
-  // );
+  server.tool(
+    'amocrm_createNote',
+    'Создать заметку для сущности (leads/contacts/companies)',
+    {
+      type: 'object',
+      properties: {
+        entity: { 
+          type: 'string', 
+          enum: ['leads', 'contacts', 'companies'],
+          description: 'Тип сущности' 
+        },
+        payload: { 
+          type: 'array',
+          description: 'Массив заметок для создания'
+        },
+      },
+      required: ['entity', 'payload'],
+    },
+    async (args) => {
+      await amo.ensureAuth();
+      const { entity, payload } = args;
+      const data = await amo.post(`/api/v4/${entity}/notes`, payload);
+      return { content: [{ type: 'text', text: JSON.stringify(data) }] };
+    }
+  );
 
   server.tool(
     'amocrm_exchangeAuthCode',
