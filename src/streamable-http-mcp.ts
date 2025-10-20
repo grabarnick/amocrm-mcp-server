@@ -481,7 +481,27 @@ class StreamableHttpMcpServer {
                     },
                     required: ['id']
                   }
-                }
+                },
+                // Дополнительно зарегистрированные инструменты
+                { name: 'amocrm_updateLead', description: 'Обновить существующую сделку', inputSchema: { type: 'object', properties: { id: { type: 'number' }, name: { type: 'string' }, price: { type: 'number' }, pipeline_id: { type: 'number' }, status_id: { type: 'number' }, responsible_user_id: { type: 'number' }, custom_fields_values: { type: 'array' } }, required: ['id'] } },
+                { name: 'amocrm_deleteLead', description: 'Удалить сделку', inputSchema: { type: 'object', properties: { id: { type: 'number' } }, required: ['id'] } },
+                { name: 'amocrm_searchLeads', description: 'Поиск сделок по фильтрам', inputSchema: { type: 'object', properties: { query: { type: 'string' }, status_id: { type: 'number' }, pipeline_id: { type: 'number' }, responsible_user_id: { type: 'number' }, limit: { type: 'number' } } } },
+                { name: 'amocrm_linkLeadToContact', description: 'Связать сделку с контактом', inputSchema: { type: 'object', properties: { lead_id: { type: 'number' }, contact_id: { type: 'number' } }, required: ['lead_id', 'contact_id'] } },
+                { name: 'amocrm_linkLeadToCompany', description: 'Связать сделку с компанией', inputSchema: { type: 'object', properties: { lead_id: { type: 'number' }, company_id: { type: 'number' } }, required: ['lead_id', 'company_id'] } },
+                { name: 'amocrm_listPipelines', description: 'Получить список всех воронок', inputSchema: { type: 'object', properties: {} } },
+                { name: 'amocrm_getPipeline', description: 'Получить конкретную воронку с этапами', inputSchema: { type: 'object', properties: { id: { type: 'number' } }, required: ['id'] } },
+                { name: 'amocrm_moveLeadToStatus', description: 'Переместить сделку в другой статус', inputSchema: { type: 'object', properties: { lead_id: { type: 'number' }, status_id: { type: 'number' }, pipeline_id: { type: 'number' } }, required: ['lead_id', 'status_id'] } },
+                { name: 'amocrm_createCompany', description: 'Создать новую компанию', inputSchema: { type: 'object', properties: { name: { type: 'string' }, custom_fields_values: { type: 'array' } }, required: ['name'] } },
+                { name: 'amocrm_updateCompany', description: 'Обновить существующую компанию', inputSchema: { type: 'object', properties: { id: { type: 'number' }, name: { type: 'string' }, custom_fields_values: { type: 'array' } }, required: ['id'] } },
+                { name: 'amocrm_deleteCompany', description: 'Удалить компанию', inputSchema: { type: 'object', properties: { id: { type: 'number' } }, required: ['id'] } },
+                { name: 'amocrm_searchCompanies', description: 'Поиск компаний', inputSchema: { type: 'object', properties: { query: { type: 'string' }, limit: { type: 'number' } } } },
+                { name: 'amocrm_listTasks', description: 'Получить список задач', inputSchema: { type: 'object', properties: { entity_type: { type: 'string', enum: ['leads', 'contacts', 'companies', 'customers'] }, entity_id: { type: 'number' }, responsible_user_id: { type: 'number' }, is_completed: { type: 'boolean' }, limit: { type: 'number' } } } },
+                { name: 'amocrm_createTask', description: 'Создать новую задачу', inputSchema: { type: 'object', properties: { entity_type: { type: 'string', enum: ['leads', 'contacts', 'companies', 'customers'] }, entity_id: { type: 'number' }, text: { type: 'string' }, complete_till_at: { type: 'number' }, responsible_user_id: { type: 'number' }, task_type_id: { type: 'number' } }, required: ['entity_type', 'entity_id', 'text', 'complete_till_at'] } },
+                { name: 'amocrm_updateTask', description: 'Обновить задачу', inputSchema: { type: 'object', properties: { id: { type: 'number' }, text: { type: 'string' }, complete_till_at: { type: 'number' }, is_completed: { type: 'boolean' }, responsible_user_id: { type: 'number' } }, required: ['id'] } },
+                { name: 'amocrm_completeTask', description: 'Отметить задачу как выполненную', inputSchema: { type: 'object', properties: { id: { type: 'number' } }, required: ['id'] } },
+                { name: 'amocrm_listUsers', description: 'Получить список пользователей аккаунта', inputSchema: { type: 'object', properties: {} } },
+                { name: 'amocrm_getUser', description: 'Получить пользователя по ID', inputSchema: { type: 'object', properties: { id: { type: 'number' } }, required: ['id'] } },
+                { name: 'amocrm_exchangeAuthCode', description: 'Обменять authorization code на токены OAuth2', inputSchema: { type: 'object', properties: { code: { type: 'string' }, redirect_uri: { type: 'string' } }, required: ['code'] } }
               ]
             }
           };
@@ -583,6 +603,148 @@ class StreamableHttpMcpServer {
           const companyData = await this.amo.get(`/api/v4/companies/${companyId}`);
           result = { content: [{ type: 'text', text: JSON.stringify(companyData) }] };
           break;
+        
+        case 'amocrm_updateLead': {
+          const { id, ...updateData } = args || {};
+          if (!id) throw new Error('Lead ID is required');
+          const payload = [{ id, ...updateData }];
+          const data = await this.amo.patch('/api/v4/leads', payload);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_deleteLead': {
+          const { id } = args || {};
+          if (!id) throw new Error('Lead ID is required');
+          const data = await this.amo.delete(`/api/v4/leads/${id}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_searchLeads': {
+          const { query, status_id, pipeline_id, responsible_user_id, limit = 25 } = args || {};
+          let url = `/api/v4/leads?limit=${limit}`;
+          if (query) url += `&query=${encodeURIComponent(query)}`;
+          if (status_id) url += `&filter[statuses][]=${status_id}`;
+          if (pipeline_id) url += `&filter[pipelines][]=${pipeline_id}`;
+          if (responsible_user_id) url += `&filter[responsible_user_id]=${responsible_user_id}`;
+          const data = await this.amo.get(url);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_linkLeadToContact': {
+          const { lead_id, contact_id } = args || {};
+          if (!lead_id || !contact_id) throw new Error('lead_id and contact_id are required');
+          const data = await this.amo.post(`/api/v4/leads/${lead_id}/link`, [{ to_entity_id: contact_id, to_entity_type: 'contacts' }]);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_linkLeadToCompany': {
+          const { lead_id, company_id } = args || {};
+          if (!lead_id || !company_id) throw new Error('lead_id and company_id are required');
+          const data = await this.amo.post(`/api/v4/leads/${lead_id}/link`, [{ to_entity_id: company_id, to_entity_type: 'companies' }]);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_listPipelines': {
+          const data = await this.amo.get('/api/v4/leads/pipelines');
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_getPipeline': {
+          const { id } = args || {};
+          if (!id) throw new Error('Pipeline ID is required');
+          const data = await this.amo.get(`/api/v4/leads/pipelines/${id}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_moveLeadToStatus': {
+          const { lead_id, status_id, pipeline_id } = args || {};
+          if (!lead_id || !status_id) throw new Error('lead_id and status_id are required');
+          const payload: any = { id: lead_id, status_id };
+          if (pipeline_id) payload.pipeline_id = pipeline_id;
+          const data = await this.amo.patch('/api/v4/leads', [payload]);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_createCompany': {
+          const payload = Array.isArray(args) ? args : [args];
+          const data = await this.amo.post('/api/v4/companies', payload);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_updateCompany': {
+          const { id, ...updateData } = args || {};
+          if (!id) throw new Error('Company ID is required');
+          const payload = [{ id, ...updateData }];
+          const data = await this.amo.patch('/api/v4/companies', payload);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_deleteCompany': {
+          const { id } = args || {};
+          if (!id) throw new Error('Company ID is required');
+          const data = await this.amo.delete(`/api/v4/companies/${id}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_searchCompanies': {
+          const { query, limit = 25 } = args || {};
+          let url = `/api/v4/companies?limit=${limit}`;
+          if (query) url += `&query=${encodeURIComponent(query)}`;
+          const data = await this.amo.get(url);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_listTasks': {
+          const { entity_type, entity_id, responsible_user_id, is_completed, limit = 25 } = args || {};
+          let url = `/api/v4/tasks?limit=${limit}`;
+          if (entity_type) url += `&filter[entity_type]=${entity_type}`;
+          if (entity_id) url += `&filter[entity_id]=${entity_id}`;
+          if (responsible_user_id) url += `&filter[responsible_user_id]=${responsible_user_id}`;
+          if (is_completed !== undefined) url += `&filter[is_completed]=${is_completed}`;
+          const data = await this.amo.get(url);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_createTask': {
+          const payload = Array.isArray(args) ? args : [args];
+          const data = await this.amo.post('/api/v4/tasks', payload);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_updateTask': {
+          const { id, ...updateData } = args || {};
+          if (!id) throw new Error('Task ID is required');
+          const payload = [{ id, ...updateData }];
+          const data = await this.amo.patch('/api/v4/tasks', payload);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_completeTask': {
+          const { id } = args || {};
+          if (!id) throw new Error('Task ID is required');
+          const data = await this.amo.patch('/api/v4/tasks', [{ id, is_completed: true }]);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_listUsers': {
+          const data = await this.amo.get('/api/v4/users');
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_getUser': {
+          const { id } = args || {};
+          if (!id) throw new Error('User ID is required');
+          const data = await this.amo.get(`/api/v4/users/${id}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_exchangeAuthCode': {
+          const { code, redirect_uri } = args || {};
+          if (!code) throw new Error('code is required');
+          const tokens = await this.amo.exchangeAuthCode(code, redirect_uri);
+          result = { content: [{ type: 'text', text: JSON.stringify(tokens) }] };
+          break;
+        }
           
         default:
           throw new Error(`Unknown tool: ${name}`);
