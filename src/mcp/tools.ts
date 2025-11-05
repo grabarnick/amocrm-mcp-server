@@ -591,6 +591,88 @@ export function registerTools(server: McpServer, amo: AmoClient) {
       return { content: [{ type: 'text', text: JSON.stringify(data) }] };
     }
   );
+
+  // ========== ПОЛЯ (Custom Fields) ==========
+
+  server.tool(
+    'amocrm_listCustomFields',
+    'Получить список кастомных полей для сущности',
+    {
+      type: 'object',
+      properties: {
+        entity_type: { 
+          type: 'string', 
+          enum: ['leads', 'contacts', 'companies', 'customers'],
+          description: 'Тип сущности (leads, contacts, companies, customers)' 
+        },
+      },
+      required: ['entity_type'],
+    },
+    async (args) => {
+      await amo.ensureAuth();
+      const { entity_type } = args;
+      const data = await amo.get(`/api/v4/${entity_type}/custom_fields`);
+      return { content: [{ type: 'text', text: JSON.stringify(data) }] };
+    }
+  );
+
+  server.tool(
+    'amocrm_getCustomField',
+    'Получить конкретное кастомное поле по ID',
+    {
+      type: 'object',
+      properties: {
+        entity_type: { 
+          type: 'string', 
+          enum: ['leads', 'contacts', 'companies', 'customers'],
+          description: 'Тип сущности (leads, contacts, companies, customers)' 
+        },
+        id: { type: 'number', description: 'ID кастомного поля' },
+      },
+      required: ['entity_type', 'id'],
+    },
+    async (args) => {
+      await amo.ensureAuth();
+      const { entity_type, id } = args;
+      const data = await amo.get(`/api/v4/${entity_type}/custom_fields/${id}`);
+      return { content: [{ type: 'text', text: JSON.stringify(data) }] };
+    }
+  );
+
+  server.tool(
+    'amocrm_createCustomField',
+    'Создать новое кастомное поле для сущности',
+    {
+      type: 'object',
+      properties: {
+        entity_type: { 
+          type: 'string', 
+          enum: ['leads', 'contacts', 'companies', 'customers'],
+          description: 'Тип сущности (leads, contacts, companies, customers)' 
+        },
+        name: { type: 'string', description: 'Название поля' },
+        type: { 
+          type: 'string', 
+          enum: ['text', 'numeric', 'checkbox', 'select', 'multiselect', 'date', 'url', 'textarea', 'radiobutton', 'streetaddress', 'date_time', 'price', 'category', 'linked_entity', 'file', 'tracking_data'],
+          description: 'Тип поля (text, numeric, checkbox, select, multiselect, date, url, textarea, radiobutton, streetaddress, date_time, price, category, linked_entity, file, tracking_data)' 
+        },
+        code: { type: 'string', description: 'Код поля (опционально, для уникальной идентификации)' },
+        is_api_only: { type: 'boolean', description: 'Доступно только через API (по умолчанию false)' },
+        enums: { 
+          type: 'array', 
+          description: 'Массив значений для полей типа select/multiselect/radiobutton (опционально)' 
+        },
+      },
+      required: ['entity_type', 'name', 'type'],
+    },
+    async (args) => {
+      await amo.ensureAuth();
+      const { entity_type, ...fieldData } = args;
+      const payload = Array.isArray(fieldData) ? fieldData : [fieldData];
+      const data = await amo.post(`/api/v4/${entity_type}/custom_fields`, payload);
+      return { content: [{ type: 'text', text: JSON.stringify(data) }] };
+    }
+  );
 }
 
 

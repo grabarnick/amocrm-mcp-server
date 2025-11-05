@@ -501,6 +501,9 @@ class StreamableHttpMcpServer {
                 { name: 'amocrm_completeTask', description: 'Отметить задачу как выполненную', inputSchema: { type: 'object', properties: { id: { type: 'number' } }, required: ['id'] } },
                 { name: 'amocrm_listUsers', description: 'Получить список пользователей аккаунта', inputSchema: { type: 'object', properties: {} } },
                 { name: 'amocrm_getUser', description: 'Получить пользователя по ID', inputSchema: { type: 'object', properties: { id: { type: 'number' } }, required: ['id'] } },
+                { name: 'amocrm_listCustomFields', description: 'Получить список кастомных полей для сущности', inputSchema: { type: 'object', properties: { entity_type: { type: 'string', enum: ['leads', 'contacts', 'companies', 'customers'] } }, required: ['entity_type'] } },
+                { name: 'amocrm_getCustomField', description: 'Получить конкретное кастомное поле по ID', inputSchema: { type: 'object', properties: { entity_type: { type: 'string', enum: ['leads', 'contacts', 'companies', 'customers'] }, id: { type: 'number' } }, required: ['entity_type', 'id'] } },
+                { name: 'amocrm_createCustomField', description: 'Создать новое кастомное поле для сущности', inputSchema: { type: 'object', properties: { entity_type: { type: 'string', enum: ['leads', 'contacts', 'companies', 'customers'] }, name: { type: 'string' }, type: { type: 'string', enum: ['text', 'numeric', 'checkbox', 'select', 'multiselect', 'date', 'url', 'textarea', 'radiobutton', 'streetaddress', 'date_time', 'price', 'category', 'linked_entity', 'file', 'tracking_data'] }, code: { type: 'string' }, is_api_only: { type: 'boolean' }, enums: { type: 'array' } }, required: ['entity_type', 'name', 'type'] } },
                 { name: 'amocrm_exchangeAuthCode', description: 'Обменять authorization code на токены OAuth2', inputSchema: { type: 'object', properties: { code: { type: 'string' }, redirect_uri: { type: 'string' } }, required: ['code'] } }
               ]
             }
@@ -735,6 +738,31 @@ class StreamableHttpMcpServer {
           const { id } = args || {};
           if (!id) throw new Error('User ID is required');
           const data = await this.amo.get(`/api/v4/users/${id}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_listCustomFields': {
+          const { entity_type } = args || {};
+          if (!entity_type) throw new Error('entity_type is required');
+          const data = await this.amo.get(`/api/v4/${entity_type}/custom_fields`);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_getCustomField': {
+          const { entity_type, id } = args || {};
+          if (!entity_type) throw new Error('entity_type is required');
+          if (!id) throw new Error('Field ID is required');
+          const data = await this.amo.get(`/api/v4/${entity_type}/custom_fields/${id}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
+          break;
+        }
+        case 'amocrm_createCustomField': {
+          const { entity_type, ...fieldData } = args || {};
+          if (!entity_type) throw new Error('entity_type is required');
+          if (!fieldData.name) throw new Error('Field name is required');
+          if (!fieldData.type) throw new Error('Field type is required');
+          const payload = [fieldData];
+          const data = await this.amo.post(`/api/v4/${entity_type}/custom_fields`, payload);
           result = { content: [{ type: 'text', text: JSON.stringify(data) }] };
           break;
         }
