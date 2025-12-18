@@ -25,11 +25,11 @@ class StreamableHttpMcpServer {
   constructor() {
     const cfg = loadConfig();
     this.authToken = cfg.MCP_AUTH_TOKEN;
-    
+
     // Определяем тип токена: долгосрочный или обычный
     const isLongTermToken = !!cfg.AMO_LONG_TERM_TOKEN;
     const accessToken = isLongTermToken ? cfg.AMO_LONG_TERM_TOKEN : cfg.AMO_ACCESS_TOKEN;
-    
+
     this.amo = createAmoClient({
       baseUrl: cfg.AMO_BASE_URL,
       clientId: cfg.AMO_CLIENT_ID,
@@ -54,18 +54,18 @@ class StreamableHttpMcpServer {
   private validateOrigin(req: http.IncomingMessage): boolean {
     const origin = req.headers.origin;
     const host = req.headers.host;
-    
+
     // Для локального использования разрешаем localhost
     if (host?.includes('localhost') || host?.includes('127.0.0.1')) {
       return true;
     }
-    
+
     // Для облачного развертывания - разрешаем все запросы
     // В production здесь можно добавить проверку разрешенных доменов
     if (host?.includes('ondigitalocean.app') || host?.includes('digitalocean.com')) {
       return true;
     }
-    
+
     // Если Origin не указан, но это не localhost - разрешаем для тестирования
     return true;
   }
@@ -93,7 +93,7 @@ class StreamableHttpMcpServer {
     // Проверка авторизации для защищенных эндпоинтов
     const url = new URL(req.url || '/', `http://${req.headers.host}`);
     const path = url.pathname;
-    
+
     if (!isPublicEndpoint(path)) {
       if (!validateBearerToken(req, res, this.authToken)) {
         return; // validateBearerToken уже отправил 401 ответ
@@ -165,7 +165,7 @@ class StreamableHttpMcpServer {
 
   private async handleGetRequest(req: http.IncomingMessage, res: http.ServerResponse, sessionId?: string) {
     const acceptHeader = req.headers.accept || '';
-    
+
     if (!acceptHeader.includes('text/event-stream')) {
       res.writeHead(405, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Method not allowed' }));
@@ -223,7 +223,7 @@ class StreamableHttpMcpServer {
 
   private async handlePostRequest(req: http.IncomingMessage, res: http.ServerResponse, sessionId?: string, protocolVersion?: string) {
     const acceptHeader = req.headers.accept || '';
-    
+
     if (!acceptHeader.includes('application/json') && !acceptHeader.includes('text/event-stream')) {
       res.writeHead(406, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Accept header must include application/json or text/event-stream' }));
@@ -238,7 +238,7 @@ class StreamableHttpMcpServer {
     req.on('end', async () => {
       try {
         const message = JSON.parse(body);
-        
+
         // Получение или создание сессии
         let session = sessionId ? this.sessions.get(sessionId) : null;
         if (!session) {
@@ -256,7 +256,7 @@ class StreamableHttpMcpServer {
           if (message.method) {
             // Это запрос или уведомление
             const response = await this.handleJsonRpcRequest(message, session);
-            
+
             if (response) {
               // Отправляем ответ через SSE или JSON
               if (acceptHeader.includes('text/event-stream')) {
@@ -266,18 +266,18 @@ class StreamableHttpMcpServer {
                   'Connection': 'keep-alive',
                   'Mcp-Session-Id': session.id
                 });
-                
+
                 this.sendSseMessage(res, {
                   type: 'message',
                   data: JSON.stringify(response)
                 });
-                
+
                 // Закрываем поток после отправки ответа
                 setTimeout(() => {
                   res.end();
                 }, 100);
               } else {
-                res.writeHead(200, { 
+                res.writeHead(200, {
                   'Content-Type': 'application/json',
                   'Mcp-Session-Id': session.id
                 });
@@ -327,7 +327,7 @@ class StreamableHttpMcpServer {
         stream.end();
       }
       this.sessions.delete(sessionId);
-      
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true, message: 'Session terminated' }));
     } else {
@@ -443,21 +443,33 @@ class StreamableHttpMcpServer {
                 },
                 {
                   name: 'amocrm_createNote',
-                  description: 'Создать заметку для сущности (leads/contacts/companies)',
+                  description: 'Создать заметку для сущности',
                   inputSchema: {
                     type: 'object',
                     properties: {
-                      entity: { 
-                        type: 'string', 
+                      entity_type: {
+                        type: 'string',
                         enum: ['leads', 'contacts', 'companies'],
-                        description: 'Тип сущности' 
+                        description: 'Тип сущности'
                       },
-                      payload: { 
-                        type: 'array',
-                        description: 'Массив заметок для создания'
+                      entity_id: {
+                        type: 'number',
+                        description: 'ID сущности'
+                      },
+                      note_type: {
+                        type: 'string',
+                        description: 'Тип заметки (common, call_in, call_out, etc). По умолчанию: common'
+                      },
+                      text: {
+                        type: 'string',
+                        description: 'Текст заметки'
+                      },
+                      params: {
+                        type: 'object',
+                        description: 'Дополнительные параметры'
                       }
                     },
-                    required: ['entity', 'payload']
+                    required: ['entity_type', 'entity_id', 'text']
                   }
                 },
                 {
@@ -523,8 +535,8 @@ class StreamableHttpMcpServer {
       return {
         jsonrpc: '2.0',
         id: message.id,
-        error: { 
-          code: -32603, 
+        error: {
+          code: -32603,
           message: 'Internal error',
           data: error instanceof Error ? error.message : 'Unknown error'
         }
@@ -534,18 +546,18 @@ class StreamableHttpMcpServer {
 
   private async callTool(params: any, session: Session): Promise<any> {
     const { name, arguments: args } = params;
-    
+
     try {
       await this.amo.ensureAuth();
-      
+
       let result: any;
-      
+
       switch (name) {
         case 'amocrm_getAccount':
           const accountData = await this.amo.get('/api/v4/account');
           result = { content: [{ type: 'text', text: JSON.stringify(accountData) }] };
           break;
-          
+
         case 'amocrm_listLeads':
           const { page = 1, limit = 25 } = args || {};
           const offset = (page - 1) * limit;
@@ -587,9 +599,17 @@ class StreamableHttpMcpServer {
           break;
 
         case 'amocrm_createNote':
-          const { entity, payload } = args;
-          if (!entity || !payload) throw new Error('Entity and payload are required');
-          const noteData = await this.amo.post(`/api/v4/${entity}/notes`, payload);
+          const { entity_type, entity_id, note_type = 'common', text, params } = args || {};
+          if (!entity_type || !entity_id || !text) throw new Error('entity_type, entity_id and text are required');
+
+          const noteParams = params || { text };
+          const notePayload = [{
+            entity_id,
+            note_type,
+            params: noteParams
+          }];
+
+          const noteData = await this.amo.post(`/api/v4/${entity_type}/notes`, notePayload);
           result = { content: [{ type: 'text', text: JSON.stringify(noteData) }] };
           break;
 
@@ -606,7 +626,7 @@ class StreamableHttpMcpServer {
           const companyData = await this.amo.get(`/api/v4/companies/${companyId}`);
           result = { content: [{ type: 'text', text: JSON.stringify(companyData) }] };
           break;
-        
+
         case 'amocrm_updateLead': {
           const { id, ...updateData } = args || {};
           if (!id) throw new Error('Lead ID is required');
@@ -773,11 +793,11 @@ class StreamableHttpMcpServer {
           result = { content: [{ type: 'text', text: JSON.stringify(tokens) }] };
           break;
         }
-          
+
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
-      
+
       return {
         jsonrpc: '2.0',
         id: params.id,

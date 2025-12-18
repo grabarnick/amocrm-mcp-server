@@ -112,26 +112,47 @@ export function registerTools(server: McpServer, amo: AmoClient) {
 
   server.tool(
     'amocrm_createNote',
-    'Создать заметку для сущности (leads/contacts/companies)',
+    'Создать заметку для сущности',
     {
       type: 'object',
       properties: {
-        entity: { 
+        entity_type: { 
           type: 'string', 
           enum: ['leads', 'contacts', 'companies'],
-          description: 'Тип сущности' 
+          description: 'Тип сущности (leads, contacts, companies)' 
         },
-        payload: { 
-          type: 'array',
-          description: 'Массив заметок для создания'
+        entity_id: { 
+          type: 'number',
+          description: 'ID сущности'
         },
+        note_type: {
+          type: 'string',
+          description: 'Тип заметки (common, call_in, call_out, etc). По умолчанию: common'
+        },
+        text: {
+          type: 'string',
+          description: 'Текст заметки (для типа common)'
+        },
+        params: {
+          type: 'object',
+          description: 'Дополнительные параметры заметки (если нужно)'
+        }
       },
-      required: ['entity', 'payload'],
+      required: ['entity_type', 'entity_id', 'text'],
     },
     async (args) => {
       await amo.ensureAuth();
-      const { entity, payload } = args;
-      const data = await amo.post(`/api/v4/${entity}/notes`, payload);
+      const { entity_type, entity_id, note_type = 'common', text, params } = args;
+      
+      const noteParams = params || { text };
+      
+      const payload = [{
+        entity_id,
+        note_type,
+        params: noteParams
+      }];
+      
+      const data = await amo.post(`/api/v4/${entity_type}/notes`, payload);
       return { content: [{ type: 'text', text: JSON.stringify(data) }] };
     }
   );
